@@ -5,7 +5,7 @@ using System;
 
 namespace Microsoft.JSInterop
 {
-    internal static class CamelCase
+    public static class CamelCase
     {
         public static string MemberNameToCamelCase(string value)
         {
