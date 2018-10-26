@@ -98,18 +98,6 @@ namespace Microsoft.JSInterop.Test
         });
 
         [Fact]
-        public Task CanInvokeStaticNonVoidMethodWithoutCustomIdentifier() => WithJSRuntime(jsRuntime =>
-        {
-            // Arrange/Act
-            var resultJson = DotNetDispatcher.Invoke(thisAssemblyName, nameof(SomePublicType.InvokableMethodWithoutCustomIdentifier), default, null);
-            var result = Json.Deserialize<TestDTO>(resultJson);
-
-            // Assert
-            Assert.Equal("InvokableMethodWithoutCustomIdentifier", result.StringVal);
-            Assert.Equal(456, result.IntVal);
-        });
-
-        [Fact]
         public Task CanInvokeStaticWithParams() => WithJSRuntime(jsRuntime =>
         {
             // Arrange: Track a .NET object to use as an arg
@@ -345,17 +333,13 @@ namespace Microsoft.JSInterop.Test
                     })
                 };
 
-            [JSInvokable]
-            public static TestDTO InvokableMethodWithoutCustomIdentifier()
-                => new TestDTO { StringVal = "InvokableMethodWithoutCustomIdentifier", IntVal = 456 };
-
-            [JSInvokable]
+            [JSInvokable(nameof(InvokableInstanceVoid))]
             public void InvokableInstanceVoid()
             {
                 DidInvokeMyInvocableInstanceVoid = true;
             }
 
-            [JSInvokable]
+            [JSInvokable(nameof(InvokableInstanceMethod))]
             public object[] InvokableInstanceMethod(string someString, TestDTO someDTO)
             {
                 // Returning an array to make the point that object references
@@ -371,7 +355,7 @@ namespace Microsoft.JSInterop.Test
                 };
             }
 
-            [JSInvokable]
+            [JSInvokable(nameof(InvokableAsyncMethod))]
             public async Task<object[]> InvokableAsyncMethod(TestDTO dtoViaJson, TestDTO dtoByRef)
             {
                 await Task.Delay(50);
@@ -395,7 +379,7 @@ namespace Microsoft.JSInterop.Test
         {
             public bool DidInvokeMyBaseClassInvocableInstanceVoid;
 
-            [JSInvokable]
+            [JSInvokable(nameof(BaseClassInvokableInstanceVoid))]
             public void BaseClassInvokableInstanceVoid()
             {
                 DidInvokeMyBaseClassInvocableInstanceVoid = true;

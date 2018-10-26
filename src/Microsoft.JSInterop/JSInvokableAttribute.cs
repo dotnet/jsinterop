@@ -23,18 +23,14 @@ namespace Microsoft.JSInterop
         public string Identifier { get; }
 
         /// <summary>
-        /// Constructs an instance of <see cref="JSInvokableAttribute"/> without setting
-        /// an identifier for the method.
-        /// </summary>
-        public JSInvokableAttribute()
-        {
-        }
-
-        /// <summary>
         /// Constructs an instance of <see cref="JSInvokableAttribute"/> using the specified
         /// identifier.
         /// </summary>
-        /// <param name="identifier">An identifier for the method, which must be unique within the scope of the assembly.</param>
+        /// <param name="identifier">
+        ///     An identifier for the method.
+        ///     For static methods the identifier must be unique within the scope of the assembly.
+        ///     For instance methods the identifier must be unique within the scope of the instance's class hierarchy.
+        /// </param>
         public JSInvokableAttribute(string identifier)
         {
             if (string.IsNullOrEmpty(identifier))
