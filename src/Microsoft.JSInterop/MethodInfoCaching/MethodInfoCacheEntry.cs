@@ -17,7 +17,7 @@ namespace Microsoft.JSInterop.MethodInfoCaching
         /// <summary>
         /// The types of the parameters the method requires, in parameter order.
         /// </summary>
-        public readonly IReadOnlyCollection<Type> ParameterTypes;
+        public readonly IReadOnlyList<Type> ParameterTypes;
         /// <summary>
         /// The return type of the method.
         /// </summary>

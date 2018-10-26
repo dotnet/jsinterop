@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using Microsoft.JSInterop.Internal;
+using Microsoft.JSInterop.MethodInfoCaching;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -16,8 +17,14 @@ namespace Microsoft.JSInterop
     /// </summary>
     public static class DotNetDispatcher
     {
-        private static ConcurrentDictionary<string, IReadOnlyDictionary<string, (MethodInfo, Type[])>> _cachedMethodsByAssembly
-            = new ConcurrentDictionary<string, IReadOnlyDictionary<string, (MethodInfo, Type[])>>();
+        private static readonly IMethodInfoCache _methodInfoCache;
+
+        static DotNetDispatcher()
+        {
+            _methodInfoCache = new MethodInfoCache(
+                instanceMethodInfoCache: new InstanceMethodInfoCache(),
+                staticMethodInfoCache: new StaticMethodInfoCache());
+        }
 
         /// <summary>
         /// Receives a call from JS to .NET, locating and invoking the specified method.
@@ -135,7 +142,17 @@ namespace Microsoft.JSInterop
                 assemblyName = targetInstance.GetType().Assembly.GetName().Name;
             }
 
-            var (methodInfo, parameterTypes) = GetCachedMethodInfo(assemblyName, methodIdentifier);
+            MethodInfoCacheEntry cachedMethodInfo;
+            if (targetInstance == null)
+            {
+                cachedMethodInfo = _methodInfoCache.GetStaticMethodInfo(assemblyName, methodIdentifier);
+            }
+            else
+            {
+                cachedMethodInfo = _methodInfoCache.GetInstanceMethodInfo(targetInstance.GetType(), methodIdentifier);
+            }
+            MethodInfo methodInfo = cachedMethodInfo.MethodInfo;
+            IReadOnlyList<Type> parameterTypes = cachedMethodInfo.ParameterTypes;
 
             // There's no direct way to say we want to deserialize as an array with heterogenous
             // entry types (e.g., [string, int, bool]), so we need to deserialize in two phases.
@@ -148,9 +165,10 @@ namespace Microsoft.JSInterop
                 suppliedArgs = Json.Deserialize<SimpleJson.JsonArray>(argsJson).ToArray<object>();
                 suppliedArgsLength = suppliedArgs.Length;
             }
-            if (suppliedArgsLength != parameterTypes.Length)
+            if (suppliedArgsLength != parameterTypes.Count)
             {
-                throw new ArgumentException($"In call to '{methodIdentifier}', expected {parameterTypes.Length} parameters but received {suppliedArgsLength}.");
+                throw new ArgumentException($"In call to '{methodIdentifier}', " +
+                    $"expected {parameterTypes.Count} parameters but received {suppliedArgsLength}.");
             }
 
             // Second, convert each supplied value to the type expected by the method
@@ -208,82 +226,6 @@ namespace Microsoft.JSInterop
             // DotNetDispatcher only works with JSRuntimeBase instances.
             var jsRuntime = (JSRuntimeBase)JSRuntime.Current;
             jsRuntime.ArgSerializerStrategy.ReleaseDotNetObject(dotNetObjectId);
-        }
-
-        private static (MethodInfo, Type[]) GetCachedMethodInfo(string assemblyName, string methodIdentifier)
-        {
-            if (string.IsNullOrWhiteSpace(assemblyName))
-            {
-                throw new ArgumentException("Cannot be null, empty, or whitespace.", nameof(assemblyName));
-            }
-
-            if (string.IsNullOrWhiteSpace(methodIdentifier))
-            {
-                throw new ArgumentException("Cannot be null, empty, or whitespace.", nameof(methodIdentifier));
-            }
-
-            var assemblyMethods = _cachedMethodsByAssembly.GetOrAdd(assemblyName, ScanAssemblyForCallableMethods);
-            if (assemblyMethods.TryGetValue(methodIdentifier, out var result))
-            {
-                return result;
-            }
-            else
-            {
-                throw new ArgumentException($"The assembly '{assemblyName}' does not contain a public method with [{nameof(JSInvokableAttribute)}(\"{methodIdentifier}\")].");
-            }
-        }
-
-        private static IReadOnlyDictionary<string, (MethodInfo, Type[])> ScanAssemblyForCallableMethods(string assemblyName)
-        {
-            // TODO: Consider looking first for assembly-level attributes (i.e., if there are any,
-            // only use those) to avoid scanning, especially for framework assemblies.
-            var result = new Dictionary<string, (MethodInfo, Type[])>();
-            var invokableMethods = GetRequiredLoadedAssembly(assemblyName)
-                .GetExportedTypes()
-                .SelectMany(type => type.GetMethods(
-                    BindingFlags.Public | 
-                    BindingFlags.DeclaredOnly | 
-                    BindingFlags.Instance |
-                    BindingFlags.Static))
-                .Where(method => method.IsDefined(typeof(JSInvokableAttribute), inherit: false));
-            foreach (var method in invokableMethods)
-            {
-                var identifier = method.GetCustomAttribute<JSInvokableAttribute>(false).Identifier ?? method.Name;
-                var parameterTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
-
-                try
-                {
-                    result.Add(identifier, (method, parameterTypes));
-                }
-                catch (ArgumentException)
-                {
-                    if (result.ContainsKey(identifier))
-                    {
-                        throw new InvalidOperationException($"The assembly '{assemblyName}' contains more than one " +
-                            $"[JSInvokable] method with identifier '{identifier}'. All [JSInvokable] methods within the same " +
-                            $"assembly must have different identifiers. You can pass a custom identifier as a parameter to " +
-                            $"the [JSInvokable] attribute.");
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        private static Assembly GetRequiredLoadedAssembly(string assemblyName)
-        {
-            // We don't want to load assemblies on demand here, because we don't necessarily trust
-            // "assemblyName" to be something the developer intended to load. So only pick from the
-            // set of already-loaded assemblies.
-            // In some edge cases this might force developers to explicitly call something on the
-            // target assembly (from .NET) before they can invoke its allowed methods from JS.
-            var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-            return loadedAssemblies.FirstOrDefault(a => a.GetName().Name.Equals(assemblyName, StringComparison.Ordinal))
-                ?? throw new ArgumentException($"There is no loaded assembly with the name '{assemblyName}'.");
         }
 
         private static Exception UnwrapException(Exception ex)

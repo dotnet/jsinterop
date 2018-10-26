@@ -50,7 +50,6 @@ namespace Microsoft.JSInterop.MethodInfoCaching
             // including any that have been inherited
             IEnumerable<MethodInfo> invokableMethods = classType
                 .GetMethods(
-                    BindingFlags.NonPublic |
                     BindingFlags.Public |
                     BindingFlags.Instance)
                 .Where(method => method.IsDefined(typeof(JSInvokableAttribute), inherit: true));

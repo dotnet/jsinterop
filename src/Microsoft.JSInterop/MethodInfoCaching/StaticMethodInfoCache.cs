@@ -55,7 +55,6 @@ namespace Microsoft.JSInterop.MethodInfoCaching
             IEnumerable<MethodInfo> invokableMethods = GetRequiredLoadedAssembly(assemblyName)
                 .GetExportedTypes()
                 .SelectMany(type => type.GetMethods(
-                    BindingFlags.NonPublic |
                     BindingFlags.Public |
                     BindingFlags.DeclaredOnly |
                     BindingFlags.Static))
