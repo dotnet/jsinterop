@@ -96,61 +96,62 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
         });
 
         [Theory]
-        [InlineData("MethodOnInternalType")]
-        [InlineData("PrivateMethod")]
-        [InlineData("ProtectedMethod")]
-        [InlineData("StaticMethodWithoutAttribute")] // That's not really its identifier; just making the point that there's no way to invoke it
-        [InlineData("InstanceMethodWithoutAttribute")] // That's not really its identifier; just making the point that there's no way to invoke it
-        //TODO: Instance methods with open method generics
-        //TODO: Static methods with open method generics
-        //TODO: Static method on class with open generics
-        public void CannotInvokeUnsuitableMethods(string methodIdentifier)
+        [InlineData(TestModelMethodNames.PublicInstanceClass_PrivateInstanceVoidMethod)]
+        [InlineData(TestModelMethodNames.PublicInstanceClass_ProtectedInstanceVoidMethod)]
+        public Task CannotInvokeUnsuitableMethods(string methodIdentifier) => WithJSRuntime(jsRuntime =>
         {
+            // Arrange: Track some instance plus another object we'll pass as a param
+            var targetInstance = new PublicInstanceClass();
+            jsRuntime.Invoke<object>("unimportant", new DotNetObjectRef(targetInstance));
             var ex = Assert.Throws<ArgumentException>(() =>
             {
-                DotNetDispatcher.Invoke(ThisAssemblyName, methodIdentifier, default, null);
+                DotNetDispatcher.Invoke(null, methodIdentifier, 1, null);
             });
 
-            Assert.Equal($"The assembly '{ThisAssemblyName}' does not contain a public static method with [JSInvokableAttribute(\"{methodIdentifier}\")].", ex.Message);
-        }
+            Assert.Equal(
+                expected: 
+                    $"The class '{nameof(PublicInstanceClass)}' does not contain a public method" +
+                    $" with [{nameof(JSInvokableAttribute)}(\"{methodIdentifier}\")].",
+                actual: ex.Message);
+        });
 
         [Fact]
         public Task CanInvokeAsyncMethod() => WithJSRuntime(async jsRuntime =>
         {
-            // Arrange: Track some instance plus another object we'll pass as a param
-            var targetInstance = new PublicInstanceClass();
+        // Arrange: Track some instance plus another object we'll pass as a param
+        var targetInstance = new PublicInstanceClass();
             var arg2 = new TestDto { IntVal = 1234, StringVal = "My string" };
             jsRuntime.Invoke<object>("unimportant", new DotNetObjectRef(targetInstance), new DotNetObjectRef(arg2));
 
-            // Arrange: all args
-            var argsJson = Json.Serialize(new object[]
-                {
+        // Arrange: all args
+        var argsJson = Json.Serialize(new object[]
+        {
                 new TestDto { IntVal = 1000, StringVal = "String via JSON" },
                 "__dotNetObject:2"
                 });
 
-            // Act
-            var callId = "123";
+        // Act
+        var callId = "123";
             var resultTask = jsRuntime.NextInvocationTask;
             DotNetDispatcher.BeginInvoke(callId, null, TestModelMethodNames.PublicInstanceClass_PublicInstanceAsyncMethod, 1, argsJson);
             await resultTask;
             var result = Json.Deserialize<SimpleJson.JsonArray>(jsRuntime.LastInvocationArgsJson);
             var resultValue = (SimpleJson.JsonArray)result[2];
 
-            // Assert: Correct info to complete the async call
-            Assert.Equal(0, jsRuntime.LastInvocationAsyncHandle); // 0 because it doesn't want a further callback from JS to .NET
+        // Assert: Correct info to complete the async call
+        Assert.Equal(0, jsRuntime.LastInvocationAsyncHandle); // 0 because it doesn't want a further callback from JS to .NET
             Assert.Equal("DotNet.jsCallDispatcher.endInvokeDotNetFromJS", jsRuntime.LastInvocationIdentifier);
             Assert.Equal(3, result.Count);
             Assert.Equal(callId, result[0]);
             Assert.True((bool)result[1]); // Success flag
 
-            // Assert: First result value marshalled via JSON
-            var resultDto1 = (TestDto)jsRuntime.ArgSerializerStrategy.DeserializeObject(resultValue[0], typeof(TestDto));
+        // Assert: First result value marshalled via JSON
+        var resultDto1 = (TestDto)jsRuntime.ArgSerializerStrategy.DeserializeObject(resultValue[0], typeof(TestDto));
             Assert.Equal("STRING VIA JSON", resultDto1.StringVal);
             Assert.Equal(2000, resultDto1.IntVal);
 
-            // Assert: Second result value marshalled by ref
-            var resultDto2Ref = (string)resultValue[1];
+        // Assert: Second result value marshalled by ref
+        var resultDto2Ref = (string)resultValue[1];
             Assert.Equal("__dotNetObject:3", resultDto2Ref);
             var resultDto2 = (TestDto)jsRuntime.ArgSerializerStrategy.FindDotNetObject(3);
             Assert.Equal("MY STRING", resultDto2.StringVal);

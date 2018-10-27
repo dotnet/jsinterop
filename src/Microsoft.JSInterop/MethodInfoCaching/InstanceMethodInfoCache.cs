@@ -22,7 +22,7 @@ namespace Microsoft.JSInterop.MethodInfoCaching
             MethodInfoCacheEntry result;
             if (!TryGet(classType, methodIdentifier, out result))
             {
-                throw new ArgumentException($"The class '{classType.Name}' does not contain a method" +
+                throw new ArgumentException($"The class '{classType.Name}' does not contain a public method" +
                     $" with [{nameof(JSInvokableAttribute)}(\"{methodIdentifier}\")].");
             }
             return result;

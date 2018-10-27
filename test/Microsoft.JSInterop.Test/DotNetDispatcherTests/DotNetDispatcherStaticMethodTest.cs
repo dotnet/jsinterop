@@ -77,14 +77,8 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
         });
 
         [Theory]
-        [InlineData("MethodOnInternalType")]
-        [InlineData("PrivateMethod")]
-        [InlineData("ProtectedMethod")]
-        [InlineData("StaticMethodWithoutAttribute")] // That's not really its identifier; just making the point that there's no way to invoke it
-        [InlineData("InstanceMethodWithoutAttribute")] // That's not really its identifier; just making the point that there's no way to invoke it
-        //TODO: Instance methods with open method generics
-        //TODO: Static methods with open method generics
-        //TODO: Static method on class with open generics
+        [InlineData(TestModelMethodNames.InternalStaticClass_PublicStaticVoidMethod)]
+        [InlineData(TestModelMethodNames.PublicStaticClass_PrivateStaticVoidMethod)]
         public void CannotInvokeUnsuitableMethods(string methodIdentifier)
         {
             var ex = Assert.Throws<ArgumentException>(() =>
