@@ -1,13 +1,8 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-//TODO: Separate static / instance tests
 using System;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.JSInterop.Test.DotNetDispatcherTests.InstanceClassTestModels;
-using Microsoft.JSInterop.Test.DotNetDispatcherTests.SharedTestModels;
-using Xunit;
 
 namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
 {
@@ -17,13 +12,6 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
             = typeof(DotNetDispatcherBaseTest).Assembly.GetName().Name;
         protected readonly TestJSRuntime ThisJSRuntime
             = new TestJSRuntime();
-
-
-
-        // Instance method tests
-
-
-        // Supporting methods and classes
 
         protected Task WithJSRuntime(Action<TestJSRuntime> testCode)
         {
