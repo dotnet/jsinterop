@@ -1,6 +1,7 @@
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.JSInterop.Test.DotNetDispatcherTests.SharedTestModels;
+using Microsoft.JSInterop.Test.DotNetDispatcherTests.StaticClassTestModels;
 using Xunit;
 
 namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
@@ -11,12 +12,12 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
         public Task CanInvokeVoidMethod() => WithJSRuntime(jsRuntime =>
         {
             // Arrange/Act
-            SomePublicType.DidInvokeMyInvocableStaticVoid = false;
-            var resultJson = DotNetDispatcher.Invoke(ThisAssemblyName, "InvocableStaticVoid", default, null);
+            PublicStaticClass.StaticMethodWasInvoked = false;
+            var resultJson = DotNetDispatcher.Invoke(ThisAssemblyName, TestModelMethodNames.PublicStaticClass_PublicStaticVoidMethod, default, null);
 
             // Assert
             Assert.Null(resultJson);
-            Assert.True(SomePublicType.DidInvokeMyInvocableStaticVoid);
+            Assert.True(PublicStaticClass.StaticMethodWasInvoked);
         });
 
         // Static method tests
@@ -36,8 +37,8 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
         public Task CanInvokeNonVoidMethod() => WithJSRuntime(jsRuntime =>
         {
             // Arrange/Act
-            var resultJson = DotNetDispatcher.Invoke(ThisAssemblyName, "InvocableStaticNonVoid", default, null);
-            var result = Json.Deserialize<TestDTO>(resultJson);
+            var resultJson = DotNetDispatcher.Invoke(ThisAssemblyName, TestModelMethodNames.PublicStaticClass_PublicStaticNonVoidMethod, default, null);
+            var result = Json.Deserialize<TestDto>(resultJson);
 
             // Assert
             Assert.Equal("Test", result.StringVal);
@@ -48,32 +49,51 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
         public Task CanInvokeMethodWithParams() => WithJSRuntime(jsRuntime =>
         {
             // Arrange: Track a .NET object to use as an arg
-            var arg3 = new TestDTO { IntVal = 999, StringVal = "My string" };
+            var arg3 = new TestDto { IntVal = 999, StringVal = "My string" };
             jsRuntime.Invoke<object>("unimportant", new DotNetObjectRef(arg3));
 
             // Arrange: Remaining args
             var argsJson = Json.Serialize(new object[] {
-                new TestDTO { StringVal = "Another string", IntVal = 456 },
+                new TestDto { StringVal = "Another string", IntVal = 456 },
                 new[] { 100, 200 },
                 "__dotNetObject:1"
             });
 
             // Act
-            var resultJson = DotNetDispatcher.Invoke(ThisAssemblyName, "InvocableStaticWithParams", default, argsJson);
+            var resultJson = DotNetDispatcher.Invoke(ThisAssemblyName, TestModelMethodNames.PublicStaticClass_PublicStaticNonVoidMethodWithParams, default, argsJson);
             var result = Json.Deserialize<object[]>(resultJson);
 
             // Assert: First result value marshalled via JSON
-            var resultDto1 = (TestDTO)jsRuntime.ArgSerializerStrategy.DeserializeObject(result[0], typeof(TestDTO));
+            var resultDto1 = (TestDto)jsRuntime.ArgSerializerStrategy.DeserializeObject(result[0], typeof(TestDto));
             Assert.Equal("ANOTHER STRING", resultDto1.StringVal);
             Assert.Equal(756, resultDto1.IntVal);
 
             // Assert: Second result value marshalled by ref
             var resultDto2Ref = (string)result[1];
             Assert.Equal("__dotNetObject:2", resultDto2Ref);
-            var resultDto2 = (TestDTO)jsRuntime.ArgSerializerStrategy.FindDotNetObject(2);
+            var resultDto2 = (TestDto)jsRuntime.ArgSerializerStrategy.FindDotNetObject(2);
             Assert.Equal("MY STRING", resultDto2.StringVal);
             Assert.Equal(1299, resultDto2.IntVal);
         });
+
+        [Theory]
+        [InlineData("MethodOnInternalType")]
+        [InlineData("PrivateMethod")]
+        [InlineData("ProtectedMethod")]
+        [InlineData("StaticMethodWithoutAttribute")] // That's not really its identifier; just making the point that there's no way to invoke it
+        [InlineData("InstanceMethodWithoutAttribute")] // That's not really its identifier; just making the point that there's no way to invoke it
+        //TODO: Instance methods with open method generics
+        //TODO: Static methods with open method generics
+        //TODO: Static method on class with open generics
+        public void CannotInvokeUnsuitableMethods(string methodIdentifier)
+        {
+            var ex = Assert.Throws<ArgumentException>(() =>
+            {
+                DotNetDispatcher.Invoke(ThisAssemblyName, methodIdentifier, default, null);
+            });
+
+            Assert.Equal($"The assembly '{ThisAssemblyName}' does not contain a public static method with [JSInvokableAttribute(\"{methodIdentifier}\")].", ex.Message);
+        }
     }
 
 }

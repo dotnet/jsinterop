@@ -35,24 +35,6 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
         // Not defining this behavior through unit tests because the default outcome is
         // fine (an exception stating what info is missing).
 
-        [Theory]
-        [InlineData("MethodOnInternalType")]
-        [InlineData("PrivateMethod")]
-        [InlineData("ProtectedMethod")]
-        [InlineData("StaticMethodWithoutAttribute")] // That's not really its identifier; just making the point that there's no way to invoke it
-        [InlineData("InstanceMethodWithoutAttribute")] // That's not really its identifier; just making the point that there's no way to invoke it
-        //TODO: Instance methods with open method generics
-        //TODO: Static methods with open method generics
-        //TODO: Static method on class with open generics
-        public void CannotInvokeUnsuitableMethods(string methodIdentifier)
-        {
-            var ex = Assert.Throws<ArgumentException>(() =>
-            {
-                DotNetDispatcher.Invoke(ThisAssemblyName, methodIdentifier, default, null);
-            });
-
-            Assert.Equal($"The assembly '{ThisAssemblyName}' does not contain a public static method with [JSInvokableAttribute(\"{methodIdentifier}\")].", ex.Message);
-        }
 
         [Fact]
         public void CannotInvokeWithIncorrectNumberOfParams()
@@ -63,10 +45,10 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
             // Act/Assert
             var ex = Assert.Throws<ArgumentException>(() =>
             {
-                DotNetDispatcher.Invoke(ThisAssemblyName, "InvocableStaticWithParams", default, argsJson);
+                DotNetDispatcher.Invoke(ThisAssemblyName, TestModelMethodNames.PublicStaticClass_PublicStaticNonVoidMethodWithParams, default, argsJson);
             });
 
-            Assert.Equal("In call to 'InvocableStaticWithParams', expected 3 parameters but received 4.", ex.Message);
+            Assert.Equal($"In call to '{TestModelMethodNames.PublicStaticClass_PublicStaticNonVoidMethodWithParams}', expected 3 parameters but received 4.", ex.Message);
         }
     }
 
