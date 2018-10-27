@@ -124,17 +124,13 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests.InstanceClassTestModels
     public class FirstClassWithSameInstanceMethodIdentifier
     {
         [JSInvokable(TestModelMethodNames.SameMethodIdentifierOnUnrelatedClasses)]
-        public void SameMethodIdentifierOnUnrelatedClasses()
-        {
-        }
+        public int SameMethodIdentifierOnUnrelatedClasses() => 1;
     }
 
     public class UnrelatedClassWithSameInstanceMethodIdentifier
     {
         [JSInvokable(TestModelMethodNames.SameMethodIdentifierOnUnrelatedClasses)]
-        public void SameMethodIdentifierOnUnrelatedClasses()
-        {
-        }
+        public int SameMethodIdentifierOnUnrelatedClasses() => 2;
     }
 
 }

@@ -162,6 +162,24 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
         });
 
         [Fact]
+        public Task CanReuseMethodIdentifiersAcrossUnrelatedInstanceClasses() => WithJSRuntime(jsRuntime =>
+        {
+            // Arrange
+            var first = new FirstClassWithSameInstanceMethodIdentifier();
+            jsRuntime.Invoke<object>("unimportant", new DotNetObjectRef(first));
+            var second = new UnrelatedClassWithSameInstanceMethodIdentifier();
+            jsRuntime.Invoke<object>("unimportant", new DotNetObjectRef(second));
+
+            // Act
+            string firstResultJson = DotNetDispatcher.Invoke(null, TestModelMethodNames.SameMethodIdentifierOnUnrelatedClasses, 1, null);
+            string secondResultJson = DotNetDispatcher.Invoke(null, TestModelMethodNames.SameMethodIdentifierOnUnrelatedClasses, 2, null);
+
+            // Assert
+            Assert.Equal("1", firstResultJson);
+            Assert.Equal("2", secondResultJson);
+        });
+
+        [Fact]
         public Task CanInvokeAsyncMethod() => WithJSRuntime(async jsRuntime =>
         {
             // Arrange: Track some instance plus another object we'll pass as a param
