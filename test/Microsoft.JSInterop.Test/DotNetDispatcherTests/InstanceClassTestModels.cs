@@ -107,10 +107,6 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests.InstanceClassTestModels
             InstanceMethodWasInvoked = true;
             return value;
         }
-
-        // Cannot invoke
-        [JSInvokable(TestModelMethodNames.PublicGenericClass_PublicInstanceVoidMethodWithOpenGenericParams)]
-        public void PublicInstanceVoidMethodWithOpenGenericParams<T2>(T2 value) => InstanceMethodWasInvoked = true;
     }
 
     public class BaseClass

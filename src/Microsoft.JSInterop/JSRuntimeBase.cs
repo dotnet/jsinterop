@@ -50,7 +50,7 @@ namespace Microsoft.JSInterop
 
             try
             {
-                var argsJson = args?.Length > 0
+                string argsJson = args?.Length > 0
                     ? Json.Serialize(args, ArgSerializerStrategy)
                     : null;
                 BeginInvokeJS(taskId, identifier, argsJson);

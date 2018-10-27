@@ -53,7 +53,7 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
             jsRuntime.Invoke<object>("unimportant", new DotNetObjectRef(arg3));
 
             // Arrange: Remaining args
-            var argsJson = Json.Serialize(new object[] {
+            string argsJson = Json.Serialize(new object[] {
                 new TestDto { StringVal = "Another string", IntVal = 456 },
                 new[] { 100, 200 },
                 "__dotNetObject:1"

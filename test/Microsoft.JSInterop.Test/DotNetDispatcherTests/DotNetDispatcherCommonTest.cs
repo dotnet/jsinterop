@@ -40,7 +40,7 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
         public void CannotInvokeWithIncorrectNumberOfParams()
         {
             // Arrange
-            var argsJson = Json.Serialize(new object[] { 1, 2, 3, 4 });
+            string argsJson = Json.Serialize(new object[] { 1, 2, 3, 4 });
 
             // Act/Assert
             var ex = Assert.Throws<ArgumentException>(() =>

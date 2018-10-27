@@ -23,7 +23,6 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
         public const string PublicGenericClass_PublicInstanceVoidMethod = nameof(PublicGenericClass_PublicInstanceVoidMethod);
         public const string PublicGenericClass_PublicInstanceNonVoidMethod = nameof(PublicGenericClass_PublicInstanceNonVoidMethod);
         public const string PublicGenericClass_PublicInstanceNonVoidMethodWithParams = nameof(PublicGenericClass_PublicInstanceNonVoidMethodWithParams);
-        public const string PublicGenericClass_PublicInstanceVoidMethodWithOpenGenericParams = nameof(PublicGenericClass_PublicInstanceVoidMethodWithOpenGenericParams);
     }
 
 }
