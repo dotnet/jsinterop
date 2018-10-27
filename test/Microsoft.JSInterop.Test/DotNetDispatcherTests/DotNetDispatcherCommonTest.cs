@@ -29,13 +29,6 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests
             Assert.Equal("methodIdentifier", ex.ParamName);
         }
 
-        // Note: Currently it's also not possible to invoke generic methods.
-        // That's not something determined by DotNetDispatcher, but rather by the fact that we
-        // don't close over the generics in the reflection code.
-        // Not defining this behavior through unit tests because the default outcome is
-        // fine (an exception stating what info is missing).
-
-
         [Fact]
         public void CannotInvokeWithIncorrectNumberOfParams()
         {
