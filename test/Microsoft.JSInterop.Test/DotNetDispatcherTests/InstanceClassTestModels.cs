@@ -82,8 +82,6 @@ namespace Microsoft.JSInterop.Test.DotNetDispatcherTests.InstanceClassTestModels
 
         [JSInvokable(TestModelMethodNames.PublicInstanceClass_ProtectedInstanceVoidMethod)]
         protected void ProtectedInstanceVoidMethod() => InstanceMethodWasInvoked = true;
-
-        public void PublicInstanceVoidMethodWithoutAttribute() => InstanceMethodWasInvoked = true;
     }
 
     public class PublicGenericClass<T>
