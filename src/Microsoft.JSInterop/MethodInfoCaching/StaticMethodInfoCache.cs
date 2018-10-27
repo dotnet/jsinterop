@@ -33,8 +33,7 @@ namespace Microsoft.JSInterop.MethodInfoCaching
             MethodInfoCacheEntry result;
             if (!cacheItemsByMethodIdentifier.TryGetValue(methodIdentifier, out result))
             {
-                throw new InvalidOperationException($"The assembly '{assemblyName}' does not contain a class with " +
-                    $"a static method decorated with [{nameof(JSInvokableAttribute)}(\"{methodIdentifier}\")].");
+                throw new ArgumentException($"The assembly '{assemblyName}' does not contain a public static method with [JSInvokableAttribute(\"{methodIdentifier}\")].");
             }
             return result;
         }
@@ -73,7 +72,7 @@ namespace Microsoft.JSInterop.MethodInfoCaching
                 {
                     if (result.ContainsKey(methodIdentifier))
                     {
-                        throw new InvalidOperationException($"The assembly '{assemblyName}' contains more than one " +
+                        throw new ArgumentException($"The assembly '{assemblyName}' contains more than one " +
                             $"[{nameof(JSInvokableAttribute)}] method with identifier '{methodIdentifier}'. " +
                             $"All [{nameof(JSInvokableAttribute)}] methods on static methods within the same assembly " +
                             $"must have different identifiers. You can pass a custom identifier as a parameter to " +
@@ -98,12 +97,12 @@ namespace Microsoft.JSInterop.MethodInfoCaching
         {
             if (methodInfo.DeclaringType.GetGenericArguments().Length > 0)
             {
-                throw new InvalidOperationException($"Static methods of class '{methodInfo.DeclaringType.Name}' " +
+                throw new ArgumentException($"Static methods of class '{methodInfo.DeclaringType.Name}' " +
                     $"cannot be decorated with {nameof(JSInvokableAttribute)} because the class is generic.");
             }
             if (methodInfo.GetGenericArguments().Length > 0)
             {
-                throw new InvalidOperationException($"The static method '{methodInfo.DeclaringType.Name}.{methodInfo.Name}' " +
+                throw new ArgumentException($"The static method '{methodInfo.DeclaringType.Name}.{methodInfo.Name}' " +
                     $"cannot be decorated with {nameof(JSInvokableAttribute)} because it is generic.");
             }
         }

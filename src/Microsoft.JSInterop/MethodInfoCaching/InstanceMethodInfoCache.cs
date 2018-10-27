@@ -67,7 +67,7 @@ namespace Microsoft.JSInterop.MethodInfoCaching
                 {
                     if (result.ContainsKey(methodIdentifier))
                     {
-                        throw new InvalidOperationException($"The class '{classType.Name}' contains more than one " +
+                        throw new ArgumentException($"The class '{classType.Name}' contains more than one " +
                             $"[{nameof(JSInvokableAttribute)}] method with identifier '{methodIdentifier}'. " +
                             $"All instance methods within the same class must have different identifiers.");
                     }
@@ -91,12 +91,12 @@ namespace Microsoft.JSInterop.MethodInfoCaching
             // As this is ultimately called from an instance this shouldn't be possible.
             if (classType.ContainsGenericParameters)
             {
-                throw new InvalidOperationException($"Cannot determine generic argument types for class '{classType.Name}'");
+                throw new ArgumentException($"Cannot determine generic argument types for class '{classType.Name}'");
             }
             // Prohibit the calling of methods with generic parameters
             if (methodInfo.GetGenericArguments().Length > 0)
             {
-                throw new InvalidOperationException($"Cannot determine generic argument types " +
+                throw new ArgumentException($"Cannot determine generic argument types " +
                     $"for method '{classType.Name}.{methodInfo.Name}'");
             }
         }

@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+//TODO: Separate static / instance tests
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,9 +11,9 @@ namespace Microsoft.JSInterop.Test
 {
     public class DotNetDispatcherTest
     {
-        private readonly static string thisAssemblyName
+        private readonly static string _thisAssemblyName
             = typeof(DotNetDispatcherTest).Assembly.GetName().Name;
-        private readonly TestJSRuntime jsRuntime
+        private readonly TestJSRuntime _jsRuntime
             = new TestJSRuntime();
 
         [Fact]
@@ -67,10 +68,10 @@ namespace Microsoft.JSInterop.Test
         {
             var ex = Assert.Throws<ArgumentException>(() =>
             {
-                DotNetDispatcher.Invoke(thisAssemblyName, methodIdentifier, default, null);
+                DotNetDispatcher.Invoke(_thisAssemblyName, methodIdentifier, default, null);
             });
 
-            Assert.Equal($"The assembly '{thisAssemblyName}' does not contain a public method with [JSInvokableAttribute(\"{methodIdentifier}\")].", ex.Message);
+            Assert.Equal($"The assembly '{_thisAssemblyName}' does not contain a public static method with [JSInvokableAttribute(\"{methodIdentifier}\")].", ex.Message);
         }
 
         [Fact]
@@ -78,7 +79,7 @@ namespace Microsoft.JSInterop.Test
         {
             // Arrange/Act
             SomePublicType.DidInvokeMyInvocableStaticVoid = false;
-            var resultJson = DotNetDispatcher.Invoke(thisAssemblyName, "InvocableStaticVoid", default, null);
+            var resultJson = DotNetDispatcher.Invoke(_thisAssemblyName, "InvocableStaticVoid", default, null);
 
             // Assert
             Assert.Null(resultJson);
@@ -89,7 +90,7 @@ namespace Microsoft.JSInterop.Test
         public Task CanInvokeStaticNonVoidMethod() => WithJSRuntime(jsRuntime =>
         {
             // Arrange/Act
-            var resultJson = DotNetDispatcher.Invoke(thisAssemblyName, "InvocableStaticNonVoid", default, null);
+            var resultJson = DotNetDispatcher.Invoke(_thisAssemblyName, "InvocableStaticNonVoid", default, null);
             var result = Json.Deserialize<TestDTO>(resultJson);
 
             // Assert
@@ -112,7 +113,7 @@ namespace Microsoft.JSInterop.Test
             });
 
             // Act
-            var resultJson = DotNetDispatcher.Invoke(thisAssemblyName, "InvocableStaticWithParams", default, argsJson);
+            var resultJson = DotNetDispatcher.Invoke(_thisAssemblyName, "InvocableStaticWithParams", default, argsJson);
             var result = Json.Deserialize<object[]>(resultJson);
 
             // Assert: First result value marshalled via JSON
@@ -224,7 +225,7 @@ namespace Microsoft.JSInterop.Test
             // Act/Assert
             var ex = Assert.Throws<ArgumentException>(() =>
             {
-                DotNetDispatcher.Invoke(thisAssemblyName, "InvocableStaticWithParams", default, argsJson);
+                DotNetDispatcher.Invoke(_thisAssemblyName, "InvocableStaticWithParams", default, argsJson);
             });
 
             Assert.Equal("In call to 'InvocableStaticWithParams', expected 3 parameters but received 4.", ex.Message);
