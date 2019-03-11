@@ -35,7 +35,7 @@ namespace Microsoft.JSInterop
             // because there would be nobody to police that. This method *is* the police.
 
             // DotNetDispatcher only works with JSRuntimeBase instances.
-            var jsRuntime = (JSRuntimeBase)JSRuntime.Current;
+            var jsRuntime = GetJSRuntimeBase();
 
             var targetInstance = (object)null;
             if (dotNetObjectId != default)
@@ -66,7 +66,7 @@ namespace Microsoft.JSInterop
             // DotNetDispatcher only works with JSRuntimeBase instances.
             // If the developer wants to use a totally custom IJSRuntime, then their JS-side
             // code has to implement its own way of returning async results.
-            var jsRuntimeBaseInstance = (JSRuntimeBase)JSRuntime.Current;
+            var jsRuntimeBaseInstance = GetJSRuntimeBase();
 
             var targetInstance = dotNetObjectId == default
                 ? null
@@ -154,7 +154,7 @@ namespace Microsoft.JSInterop
             }
 
             // Second, convert each supplied value to the type expected by the method
-            var runtime = (JSRuntimeBase)JSRuntime.Current;
+            var runtime = GetJSRuntimeBase();
             var serializerStrategy = runtime.ArgSerializerStrategy;
             for (var i = 0; i < suppliedArgsLength; i++)
             {
@@ -190,7 +190,7 @@ namespace Microsoft.JSInterop
         /// <param name="result">If <paramref name="succeeded"/> is <c>true</c>, specifies the invocation result. If <paramref name="succeeded"/> is <c>false</c>, gives the <see cref="Exception"/> corresponding to the invocation failure.</param>
         [JSInvokable(nameof(DotNetDispatcher) + "." + nameof(EndInvoke))]
         public static void EndInvoke(long asyncHandle, bool succeeded, JSAsyncCallResult result)
-            => ((JSRuntimeBase)JSRuntime.Current).EndInvokeJS(asyncHandle, succeeded, result.ResultOrException);
+            => GetJSRuntimeBase().EndInvokeJS(asyncHandle, succeeded, result.ResultOrException);
 
         /// <summary>
         /// Releases the reference to the specified .NET object. This allows the .NET runtime
@@ -206,7 +206,7 @@ namespace Microsoft.JSInterop
         public static void ReleaseDotNetObject(long dotNetObjectId)
         {
             // DotNetDispatcher only works with JSRuntimeBase instances.
-            var jsRuntime = (JSRuntimeBase)JSRuntime.Current;
+            var jsRuntime = GetJSRuntimeBase();
             jsRuntime.ArgSerializerStrategy.ReleaseDotNetObject(dotNetObjectId);
         }
 
@@ -294,6 +294,18 @@ namespace Microsoft.JSInterop
             }
 
             return ex;
+        }
+
+        private static JSRuntimeBase GetJSRuntimeBase()
+        {
+            JSRuntimeBase runtime = (JSRuntimeBase)JSRuntime.Current;
+
+            if (runtime == null)
+            {
+                throw new InvalidOperationException("JavaScript runtime (" + nameof(JSRuntime) + "." + nameof(JSRuntime.Current) + ") is not set.");
+            }
+
+            return runtime;
         }
     }
 }

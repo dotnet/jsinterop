@@ -16,10 +16,22 @@ namespace Microsoft.JSInterop.Test
             = new TestJSRuntime();
 
         [Fact]
+        public void CannotInvokeWithoutJSRuntime()
+        {
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+            {
+                DotNetDispatcher.Invoke("SomeAssembly", "SomeMethod", default, "[]");
+            });
+
+            Assert.Equal("JavaScript runtime (" + nameof(JSRuntime) + "." + nameof(JSRuntime.Current) + ") is not set.", ex.Message);
+        }
+
+        [Fact]
         public void CannotInvokeWithEmptyAssemblyName()
         {
             var ex = Assert.Throws<ArgumentException>(() =>
             {
+                JSRuntime.SetCurrentJSRuntime(jsRuntime);
                 DotNetDispatcher.Invoke(" ", "SomeMethod", default, "[]");
             });
 
@@ -32,6 +44,7 @@ namespace Microsoft.JSInterop.Test
         {
             var ex = Assert.Throws<ArgumentException>(() =>
             {
+                JSRuntime.SetCurrentJSRuntime(jsRuntime);
                 DotNetDispatcher.Invoke("SomeAssembly", " ", default, "[]");
             });
 
@@ -45,6 +58,7 @@ namespace Microsoft.JSInterop.Test
             var assemblyName = "Some.Fake.Assembly";
             var ex = Assert.Throws<ArgumentException>(() =>
             {
+                JSRuntime.SetCurrentJSRuntime(jsRuntime);
                 DotNetDispatcher.Invoke(assemblyName, "SomeMethod", default, null);
             });
 
@@ -67,6 +81,7 @@ namespace Microsoft.JSInterop.Test
         {
             var ex = Assert.Throws<ArgumentException>(() =>
             {
+                JSRuntime.SetCurrentJSRuntime(jsRuntime);
                 DotNetDispatcher.Invoke(thisAssemblyName, methodIdentifier, default, null);
             });
 
@@ -236,6 +251,7 @@ namespace Microsoft.JSInterop.Test
             // Act/Assert
             var ex = Assert.Throws<ArgumentException>(() =>
             {
+                JSRuntime.SetCurrentJSRuntime(jsRuntime);
                 DotNetDispatcher.Invoke(thisAssemblyName, "InvocableStaticWithParams", default, argsJson);
             });
 
