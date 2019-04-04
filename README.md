@@ -1,4 +1,6 @@
-# jsinterop
+# jsinterop [ARCHIVED]
+
+## Please go to https://github.com/aspnet/Extensions/tree/master/src/JSInterop to see the latest JSInterop code base and to file issues
 
 This repo is for `Microsoft.JSInterop`, a package that provides abstractions and features for interop between .NET and JavaScript code.
 
